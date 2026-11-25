@@ -1,0 +1,61 @@
+
+name: CI - Museu Digital
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  frontend:
+    name: Validar Front-end
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Verificar TypeScript
+        run: npx tsc --noEmit
+
+      - name: Gerar versão web
+        run: npx expo export --platform web
+
+  backend:
+    name: Validar Back-end
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Verificar existência do back-end
+        id: backend
+        shell: bash
+        run: |
+          if [[ -f backend/pom.xml ]]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        if: steps.backend.outputs.exists == 'true'
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Compilar e executar testes
+        working-directory: backend
+        if: steps.backend.outputs.exists == 'true'
+        run: mvn -B verify
