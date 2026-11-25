@@ -1,8 +1,13 @@
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import YoutubePlayer from 'react-native-youtube-iframe';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  LayoutChangeEvent,
+} from "react-native";
+import YoutubePlayer from "react-native-youtube-iframe";
+import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
   videoId: string;
@@ -17,6 +22,17 @@ export default function TopicVideo({
   channel,
   description,
 }: Props) {
+  const [playerWidth, setPlayerWidth] = useState(0);
+
+  function handlePlayerLayout(event: LayoutChangeEvent) {
+    const width = event.nativeEvent.layout.width;
+    setPlayerWidth(width);
+  }
+
+  // Mantém a proporção de vídeo 16:9.
+  const playerHeight =
+    playerWidth > 0 ? (playerWidth * 9) / 16 : 220;
+
   return (
     <View style={styles.container}>
       <View style={styles.heading}>
@@ -24,17 +40,32 @@ export default function TopicVideo({
           <Ionicons name="play" size={17} color="#D9B978" />
         </View>
 
-        <View style={{ flex: 1 }}>
-          <Text style={styles.eyebrow}>CINEIA • CONTEÚDO EM VÍDEO</Text>
-          <Text style={styles.headingTitle}>Assista e aprenda</Text>
+        <View style={styles.headingContent}>
+          <Text style={styles.eyebrow}>
+            CINEIA • CONTEÚDO EM VÍDEO
+          </Text>
+
+          <Text style={styles.headingTitle}>
+            Assista e aprenda
+          </Text>
         </View>
       </View>
 
-      <View style={styles.playerContainer}>
+      <View
+        style={[styles.playerContainer, { height: playerHeight }]}
+        onLayout={handlePlayerLayout}
+      >
         <YoutubePlayer
-          height={220}
+          height={playerHeight}
           play={false}
           videoId={videoId}
+          webViewStyle={styles.webView}
+          webViewProps={{
+            scrollEnabled: false,
+            nestedScrollEnabled: false,
+            bounces: false,
+            overScrollMode: "never",
+          }}
           initialPlayerParams={{
             rel: false,
           }}
@@ -43,8 +74,12 @@ export default function TopicVideo({
 
       <View style={styles.info}>
         <Text style={styles.title}>{title}</Text>
+
         <Text style={styles.channel}>{channel}</Text>
-        <Text style={styles.description}>{description}</Text>
+
+        <Text style={styles.description}>
+          {description}
+        </Text>
       </View>
 
       <View style={styles.footer}>
@@ -53,6 +88,7 @@ export default function TopicVideo({
           size={15}
           color="#D9B978"
         />
+
         <Text style={styles.footerText}>
           Reprodução incorporada do YouTube
         </Text>
@@ -63,74 +99,94 @@ export default function TopicVideo({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#101827',
+    backgroundColor: "#101827",
     borderRadius: 18,
     marginHorizontal: 20,
     marginTop: 25,
     marginBottom: 10,
-    overflow: 'hidden',
+    overflow: "hidden",
     borderWidth: 1,
-    borderColor: 'rgba(217,185,120,0.20)',
+    borderColor: "rgba(217,185,120,0.20)",
   },
+
   heading: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     padding: 17,
   },
+
+  headingContent: {
+    flex: 1,
+  },
+
   icon: {
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: '#263449',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#263449",
+    alignItems: "center",
+    justifyContent: "center",
   },
+
   eyebrow: {
-    color: '#D9B978',
+    color: "#D9B978",
     fontSize: 8,
-    fontWeight: '900',
+    fontWeight: "900",
     letterSpacing: 1.5,
   },
+
   headingTitle: {
-    color: '#F4F1E9',
+    color: "#F4F1E9",
     fontSize: 17,
-    fontWeight: '800',
+    fontWeight: "800",
     marginTop: 4,
   },
+
   playerContainer: {
-    backgroundColor: '#000',
-    width: '100%',
+    backgroundColor: "#000000",
+    width: "100%",
+    overflow: "hidden",
   },
+
+  webView: {
+    backgroundColor: "#000000",
+  },
+
   info: {
     paddingHorizontal: 17,
     paddingTop: 15,
   },
+
   title: {
-    color: '#F4F1E9',
+    color: "#F4F1E9",
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: "800",
   },
+
   channel: {
-    color: '#D9B978',
+    color: "#D9B978",
     fontSize: 11,
     marginTop: 6,
-    fontWeight: '700',
+    fontWeight: "700",
   },
+
   description: {
-    color: '#A7B1C0',
+    color: "#A7B1C0",
     fontSize: 12,
     lineHeight: 20,
     marginTop: 9,
   },
+
   footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 7,
     padding: 15,
   },
+
   footerText: {
-    color: '#98A6B8',
+    color: "#98A6B8",
     fontSize: 9,
   },
 });
