@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import { videosByTopic } from '../data/videos';
 
 import { RootStackParamList } from "../navigation/types";
 import { topics } from "../data/topics";
+import { trackEvent } from "../services/interactionTracker";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Exhibition">;
 
@@ -238,6 +239,20 @@ export default function ExhibitionScreen({ route }: Props) {
     (item) => item.id === route.params.topicId
   );
 
+  // Registra a abertura da exposição quando o tema é carregado.
+  useEffect(() => {
+    if (!topic) {
+      return;
+    }
+
+    trackEvent("exhibition_open", "Exhibition", {
+      topicId: topic.id,
+      topicTitle: topic.title,
+    }).catch((error) => {
+      console.error("Erro ao registrar abertura da exposição:", error);
+    });
+  }, [topic?.id, topic?.title]);
+
   if (!topic) {
     return (
       <View style={styles.notFound}>
@@ -254,6 +269,15 @@ export default function ExhibitionScreen({ route }: Props) {
   const video = videosByTopic[topic.id];
 
   const openArticles = () => {
+    trackEvent("content_open", "Exhibition", {
+      topicId: topic.id,
+      topicTitle: topic.title,
+      contentId: "articles-and-research",
+      contentTitle: "Artigos e pesquisas",
+    }).catch((error) => {
+      console.error("Erro ao registrar abertura dos artigos:", error);
+    });
+
     const query = encodeURIComponent(topic.title + " história tecnologia");
     Linking.openURL("https://www.google.com/search?q=" + query);
   };
@@ -370,7 +394,29 @@ export default function ExhibitionScreen({ route }: Props) {
           </Text>
 
           {topic.content.map((paragraph, index) => (
-            <View style={styles.chapterCard} key={index}>
+            <TouchableOpacity
+              style={styles.chapterCard}
+              key={`${topic.id}-chapter-${index + 1}`}
+              activeOpacity={0.85}
+              onPress={() => {
+                const chapterTitle =
+                  [
+                    "Origem e desenvolvimento",
+                    "Aplicações e transformações",
+                    "Impactos na sociedade",
+                  ][index] || "Conhecimento complementar";
+
+                trackEvent("content_open", "Exhibition", {
+                  topicId: topic.id,
+                  topicTitle: topic.title,
+                  contentId: `${topic.id}-chapter-${index + 1}`,
+                  contentTitle: chapterTitle,
+                  chapterIndex: index + 1,
+                }).catch((error) => {
+                  console.error("Erro ao registrar abertura do capítulo:", error);
+                });
+              }}
+            >
               <View style={styles.chapterNumber}>
                 <Text style={styles.chapterNumberText}>
                   {String(index + 1).padStart(2, "0")}
@@ -387,7 +433,7 @@ export default function ExhibitionScreen({ route }: Props) {
                 </Text>
                 <Text style={styles.chapterText}>{paragraph}</Text>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
 

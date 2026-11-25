@@ -148,6 +148,28 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        <Pressable
+          onPress={() => navigation.navigate("History")}
+          style={{
+            marginHorizontal: 22,
+            marginBottom: 16,
+            padding: 14,
+            borderRadius: 12,
+            backgroundColor: "#162236",
+            borderWidth: 1,
+            borderColor: "rgba(217,185,120,0.25)",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 9,
+          }}
+        >
+          <Ionicons name="analytics-outline" size={19} color="#D9B978" />
+          <Text style={{ color: "#D9B978", fontWeight: "700" }}>
+            HISTÓRICO DE INTERAÇÕES
+          </Text>
+        </Pressable>
+
         {/* CABEÇALHO */}
         <View style={styles.header}>
           <View style={styles.brand}>

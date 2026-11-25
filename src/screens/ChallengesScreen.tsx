@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   Text,
@@ -9,154 +8,28 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../theme/colors";
+import { trackEvent } from "../services/interactionTracker";
+import {
+  getRandomQuestions,
+  type Question,
+} from "../data/questionBank";
 
-type Question = {
-  category: string;
-  question: string;
-  options: string[];
-  answer: number;
-  explanation: string;
-};
-
-const questions: Question[] = [
-  {
-    category: "COMPUTAÇÃO EM NUVEM",
-    question: "O que é computação em nuvem?",
-    options: [
-      "Um tipo de processador",
-      "Armazenamento e serviços pela internet",
-      "Um sistema operacional",
-      "Um dispositivo móvel",
-    ],
-    answer: 1,
-    explanation:
-      "A computação em nuvem permite armazenar dados e utilizar recursos computacionais pela internet, sem depender exclusivamente do armazenamento local.",
-  },
-  {
-    category: "COMPUTAÇÃO EM NUVEM",
-    question: "Qual é uma vantagem dos serviços em nuvem?",
-    options: [
-      "Impedir o acesso remoto",
-      "Eliminar a necessidade de internet",
-      "Acessar arquivos de diferentes dispositivos",
-      "Funcionar apenas em computadores antigos",
-    ],
-    answer: 2,
-    explanation:
-      "Os serviços em nuvem permitem acessar arquivos e aplicações de diferentes dispositivos conectados à internet.",
-  },
-  {
-    category: "DISPOSITIVOS MÓVEIS",
-    question: "Qual transformação os smartphones trouxeram para a sociedade?",
-    options: [
-      "Eliminar todas as redes de computadores",
-      "Integrar comunicação, aplicativos e serviços em um único dispositivo",
-      "Substituir completamente os servidores",
-      "Impedir o acesso à informação",
-    ],
-    answer: 1,
-    explanation:
-      "Os smartphones reuniram comunicação, acesso à internet, aplicativos e diversas ferramentas em dispositivos portáteis.",
-  },
-  {
-    category: "DISPOSITIVOS MÓVEIS",
-    question: "Como a inteligência artificial pode ser utilizada em celulares?",
-    options: [
-      "Somente para aumentar o brilho da tela",
-      "Para impedir o uso de aplicativos",
-      "Para reconhecimento de voz, imagens e recomendações",
-      "Apenas para armazenar fotografias",
-    ],
-    answer: 2,
-    explanation:
-      "A IA está presente em assistentes virtuais, reconhecimento facial, câmeras inteligentes, tradução e recomendações personalizadas.",
-  },
-  {
-    category: "MACHINE LEARNING",
-    question: "O que significa Machine Learning?",
-    options: [
-      "Aprendizagem de máquina",
-      "Montagem de computadores",
-      "Proteção de redes",
-      "Armazenamento físico",
-    ],
-    answer: 0,
-    explanation:
-      "Machine Learning é uma área da inteligência artificial que permite aos sistemas identificar padrões em dados e melhorar seu desempenho por meio da experiência.",
-  },
-  {
-    category: "MACHINE LEARNING",
-    question: "Como um sistema de Machine Learning aprende?",
-    options: [
-      "Somente recebendo comandos manuais",
-      "Analisando dados e identificando padrões",
-      "Desligando o computador",
-      "Substituindo a conexão com a internet",
-    ],
-    answer: 1,
-    explanation:
-      "Os algoritmos analisam exemplos e dados para identificar padrões e produzir previsões ou classificações.",
-  },
-  {
-    category: "IA GENERATIVA",
-    question: "Qual é uma característica da IA generativa?",
-    options: [
-      "Apenas armazenar arquivos",
-      "Substituir processadores",
-      "Criar textos, imagens e outros conteúdos",
-      "Conectar cabos de rede",
-    ],
-    answer: 2,
-    explanation:
-      "A IA generativa produz novos conteúdos, como textos, imagens, músicas e códigos, a partir de instruções e padrões aprendidos.",
-  },
-  {
-    category: "IA GENERATIVA",
-    question: "Qual cuidado devemos ter ao utilizar conteúdos gerados por IA?",
-    options: [
-      "Considerar todas as respostas verdadeiras",
-      "Compartilhar qualquer conteúdo sem verificar",
-      "Evitar analisar as fontes",
-      "Verificar informações e possíveis erros",
-    ],
-    answer: 3,
-    explanation:
-      "Sistemas de IA podem produzir informações incorretas ou desatualizadas. Por isso, é importante verificar fontes e avaliar criticamente os resultados.",
-  },
-  {
-    category: "SEGURANÇA DIGITAL",
-    question: "O que é phishing?",
-    options: [
-      "Uma técnica de edição de imagens",
-      "Uma tentativa de enganar pessoas para obter informações confidenciais",
-      "Um sistema de armazenamento em nuvem",
-      "Um tipo de inteligência artificial generativa",
-    ],
-    answer: 1,
-    explanation:
-      "Phishing é um golpe digital que utiliza mensagens, páginas ou links falsos para tentar obter senhas, dados bancários e outras informações pessoais.",
-  },
-  {
-    category: "SEGURANÇA DIGITAL",
-    question: "Qual prática ajuda a proteger contas digitais?",
-    options: [
-      "Utilizar a mesma senha em todos os serviços",
-      "Compartilhar senhas com desconhecidos",
-      "Ativar a autenticação de dois fatores",
-      "Abrir todos os links recebidos",
-    ],
-    answer: 2,
-    explanation:
-      "A autenticação de dois fatores adiciona uma etapa de verificação ao acesso, dificultando invasões mesmo quando uma senha é descoberta.",
-  },
-];
+function createAttemptId() {
+  return `challenge-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 export default function ChallengesScreen() {
+  const attemptId = useRef(createAttemptId());
+
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [finished, setFinished] = useState(false);
+
+  const [questions, setQuestions] = useState<Question[]>(
+  () => getRandomQuestions(10)
+);
 
   const question = questions[current];
   const progress = ((current + 1) / questions.length) * 100;
@@ -165,9 +38,27 @@ export default function ChallengesScreen() {
   function confirmAnswer() {
     if (selected === null || answered) return;
 
-    if (selected === question.answer) {
+    const isCorrect = selected === question.answer;
+
+    if (isCorrect) {
       setScore((previous) => previous + 1);
     }
+
+    // Registra a resposta escolhida, sem interromper o desafio
+    // caso o armazenamento local apresente algum problema.
+    trackEvent("challenge_answer", "Challenges", {
+      attemptId: attemptId.current,
+      questionIndex: current + 1,
+      totalQuestions: questions.length,
+      category: question.category,
+      question: question.question,
+      selectedOptionIndex: selected,
+      selectedOption: question.options[selected],
+      isCorrect,
+      pointsEarned: isCorrect ? 1 : 0,
+    }).catch((error) => {
+      console.error("Erro ao registrar resposta do desafio:", error);
+    });
 
     setAnswered(true);
   }
@@ -176,6 +67,20 @@ export default function ChallengesScreen() {
     if (!answered) return;
 
     if (current === questions.length - 1) {
+      const finalScore = score;
+      const finalPercentage = Math.round(
+        (finalScore / questions.length) * 100,
+      );
+
+      trackEvent("challenge_complete", "Challenges", {
+        attemptId: attemptId.current,
+        totalQuestions: questions.length,
+        score: finalScore,
+        percentage: finalPercentage,
+      }).catch((error) => {
+        console.error("Erro ao registrar conclusão do desafio:", error);
+      });
+
       setFinished(true);
       return;
     }
@@ -186,11 +91,14 @@ export default function ChallengesScreen() {
   }
 
   function restart() {
+    attemptId.current = createAttemptId();
+
     setCurrent(0);
     setSelected(null);
     setScore(0);
     setAnswered(false);
     setFinished(false);
+    setQuestions(getRandomQuestions(10));
   }
 
   return (

@@ -4,4 +4,5 @@ export type RootStackParamList = {
     topicId: string;
   };
   Challenges: undefined;
+  History: undefined;
 };
